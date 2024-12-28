@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-use v5.36;
+use v5.34;
 use strict;
 use warnings;
 
@@ -7,7 +7,11 @@ use Getopt::Long;
 
 my $command;
 
-my %commands = (
-    start => \&command_start,
-    stop => \&command_stop
-)
+# Process command line options
+print $ARGV[0];
+
+
+# my %commands = (
+#     start => \&command_start,
+#     stop => \&command_stop
+# )
