@@ -5,13 +5,28 @@ use warnings;
 
 use Getopt::Long;
 
-my $command;
+my $sub_command;
+my %dispatch_table = (
+    start => \&command_start,
+    stop => \&command_stop
+);
 
-# Process command line options
-print $ARGV[0];
+if(@ARGV && exists $dispatch_table{$ARGV[0]}) {             # Check if the first argument is a valid sub command
+    $dispatch_table{$ARGV[0]}();                            # Call the sub routine for the command. Each subroutine can handle its own arguments
+} else {
+
+}
 
 
-# my %commands = (
-#     start => \&command_start,
-#     stop => \&command_stop
-# )
+
+
+# Sub routine to handle the 'start' sub command
+sub command_start {
+    say "Starting the service";
+}
+
+
+# Sub routine to handle the 'stop' sub command
+sub command_stop {
+    say "Stopping the service";
+}
