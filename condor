@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use threads;
 
 my $CONDOR_PROGRAM_NAME = 'condor';
 my $CONDOR_PROCESS_FOLDER = "/tmp/$CONDOR_PROGRAM_NAME";
-my $CONDOR_PROCESS_PATH = "$CONDOR_PROCESS_FOLDER/process";
+my $CONDOR_PROCESS_FILE = "$CONDOR_PROCESS_FOLDER/process";
 
 my $sub_command;
 my %dispatch_table = (
@@ -23,17 +24,25 @@ if(@ARGV && exists $dispatch_table{$ARGV[0]}) {             # Check if the first
 
 }
 
-
-
-
 # Sub routine to handle the 'start' sub command
 sub command_start {
     # Check if an instance of condor is already running. If so, exit.
-    if(-e )
+    if(-e $CONDOR_PROCESS_FILE) {
+        say "An instance of $CONDOR_PROGRAM_NAME is already running";
+        exit 0;
+    }
+
+    # Create necessary files and folders if they don't exist
+    
+
 }
 
 
 # Sub routine to handle the 'stop' sub command
 sub command_stop {
-    say "Stopping the service";
+    # Check if there's already no instance running and exit if so
+    unless(-e $CONDOR_PROCESS_FILE) {
+        say "No instance of $CONDOR_PROGRAM_NAME is running";
+        exit 0;
+    }
 }
