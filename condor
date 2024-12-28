@@ -5,6 +5,10 @@ use warnings;
 
 use Getopt::Long;
 
+my $CONDOR_PROGRAM_NAME = 'condor';
+my $CONDOR_PROCESS_FOLDER = "/tmp/$CONDOR_PROGRAM_NAME";
+my $CONDOR_PROCESS_PATH = "$CONDOR_PROCESS_FOLDER/process";
+
 my $sub_command;
 my %dispatch_table = (
     start => \&command_start,
@@ -12,8 +16,10 @@ my %dispatch_table = (
 );
 
 if(@ARGV && exists $dispatch_table{$ARGV[0]}) {             # Check if the first argument is a valid sub command
-    $dispatch_table{$ARGV[0]}();                            # Call the sub routine for the command. Each subroutine can handle its own arguments
+    $sub_command = shift @ARGV;                             # Remove the sub command from the arguments
+    $dispatch_table{$sub_command}();                        # Call the sub routine for the command. Each subroutine can handle its own arguments
 } else {
+    # Assume the remaining options are for condor. Parse the options.
 
 }
 
@@ -22,7 +28,8 @@ if(@ARGV && exists $dispatch_table{$ARGV[0]}) {             # Check if the first
 
 # Sub routine to handle the 'start' sub command
 sub command_start {
-    say "Starting the service";
+    # Check if an instance of condor is already running. If so, exit.
+    if(-e )
 }
 
 
