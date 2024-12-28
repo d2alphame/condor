@@ -3,4 +3,11 @@ use v5.36;
 use strict;
 use warnings;
 
-say "Hello condor";
+use Getopt::Long;
+
+my $command;
+
+my %commands = (
+    start => \&command_start,
+    stop => \&command_stop
+)
