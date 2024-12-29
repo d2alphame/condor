@@ -1,2 +1,3 @@
 # condor
-Condor is a tool for monitoring changes in docker applications and automatically deploying them without downtime
+Condor is a tool for monitoring changes on a docker registry and automatically deploys them without downtime.
+It should be noted that condor requires nginx and docker to work.
