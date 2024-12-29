@@ -3,6 +3,7 @@ use v5.34;
 use strict;
 use warnings;
 
+use File::Path qw(make_path);
 use Getopt::Long;
 use threads;
 
@@ -33,7 +34,12 @@ sub command_start {
     }
 
     # Create necessary files and folders if they don't exist
-    
+    my $process_file_thread = threads->create(
+        sub {
+            make_path($CONDOR_PROCESS_FOLDER);
+        }
+    );
+
 
 }
 
