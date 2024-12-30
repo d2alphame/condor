@@ -12,7 +12,8 @@ sub info($);
 # 4. INFO
 # 5. DEBUG
 # Use 0 to ignore all logging
-my $CONFIGURED_LEVEL = 5;                # Set this to 0 to disable all logging
+# Anything greater than 5 will log all
+my $CONFIGURED_LEVEL = 3;                # Set this to 0 to disable all logging
 
 my $LEVEL_FATAL = 1;
 my $LEVEL_ERROR = 2;
@@ -24,9 +25,10 @@ sub info($) {
     return unless $CONFIGURED_LEVEL;                # Return if Logging is turned off
     return if $CONFIGURED_LEVEL > $LEVEL_INFO;      # Don't log above 'info'. So fatal, error, warn and info will be logged but not debug
     my $thread_id = threads->tid();
+    
 }
 
-sub create() {
+sub create($) {
     my $class = shift;
     return bless {}, $class;
 }
