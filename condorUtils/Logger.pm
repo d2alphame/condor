@@ -1,4 +1,4 @@
-package CondorUtils::Log;
+package CondorUtils::Logger;
 
 use v5.34;
 

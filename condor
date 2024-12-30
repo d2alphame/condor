@@ -10,7 +10,7 @@ use Getopt::Long;
 use POSIX;
 use threads;
 
-use CondorUtils::Log;
+use CondorUtils::Logger;
 
 my $CONDOR_PROGRAM_NAME = 'condor';
 
