@@ -52,7 +52,7 @@ my sub print_log($$$$;$) {
     # Print the logline
     my ($message, $level, $group, $thread_id, $handle) = @_;
     if($handle) {
-        say $handle strftime("%a, %e-%b-%Y %r $level $group ThreadId=$thread_id $message", localtime);
+        say $handle strftime("%a, %e-%b-%Y %r $LEVELS{$level}->{string} $group ThreadId=$thread_id $message", localtime);
     }
     else {
         say strftime("%a, %e-%b-%Y %r $level $group ThreadId=$thread_id $message", localtime);
@@ -64,28 +64,49 @@ my sub print_log($$$$;$) {
 # This logs at all levels and outputs to <STDOUT>
 sub default {
     my %params = @_;
-    unless($params{group}) {
-        my $group = 'CondorDefault';
+    my $group = $params{group};
+    my $thread_id = threads->tid();
+    unless($group) {
+        $group = 'DefaultLogger';
         { 
             my $level = 'DEBUG';
-            my $message = "Received a log line without a group. Using '$group' as the default group";
-            my $thread_id = threads->tid();
+            my $message = "Received a log line without a group. Using '$group' as the default group.";
             print_log($message, $level, $group, $thread_id, *STDOUT);
         }
     }
 
-    unless($params{message}) {
-        my $message = ''
+    my $message = $params{message};
+    unless($message) {
+        $message = "Received a log line without a message.";
+        {
+            my $level = 'WARN';
+            print_log($message, $level, $group, $thread_id, *STDOUT);
+            return;
+        }
     }
 
+    my $level = $params{level};
+    unless($level) {
+        $level = 'DEBUG';
+        {
+            my $message = "Received a log line without a log level. Using 'DEBUG' as the log level.";
+            print_log($message, $level, $group, $thread_id, *STDOUT);
+        }
+    }
 
+    # Invalid logging level specified
+    unless(exists $LEVELS{$level}) {
+        {
+            my $new_level = 'WARN';
+            my $message = "Received a log line with invalid log level '$level'.";
+            print_log($message, $new_level, $group, $thread_id, *STDOUT);
+            $message = "Use one of the following logging levels: @{[ keys %LEVELS]}";
+            print_log($message, $new_level, $group, $thread_id, *STDOUT);
+        }
+    }
 
-    # unless($params{message}) {
-    #     my $message = 'Received a log line without a message. Using this message as default';
-    #     my $level = 'DEBUG';
-    #     my $thread_id = threads->tid();
-    #     say strftime("%a, %e-%b-%Y %r $level $group ThreadId=$thread_id $message", localtime);
-    # }
+    
+
 }
 
 
