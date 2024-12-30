@@ -3,19 +3,21 @@ use v5.34;
 use strict;
 use warnings;
 
-use CondorUtils::Log;
-
+use FindBin;
+use lib "$FindBin::Bin";
 use File::Path qw(make_path);
 use Getopt::Long;
 use POSIX;
 use threads;
+
+use CondorUtils::Log;
 
 my $CONDOR_PROGRAM_NAME = 'condor';
 
 my $CONDOR_PROCESS_FOLDER = "/tmp/$CONDOR_PROGRAM_NAME";
 my $CONDOR_PROCESS_FILE = "$CONDOR_PROCESS_FOLDER/process";
 my $CONDOR_TEMP_LOG = "$CONDOR_PROCESS_FOLDER/logs";
-my $CONDOR_LOG = 
+my $CONDOR_LOG;
 my $CONDOR_CONFIG_FILE;
 
 
@@ -46,11 +48,6 @@ sub command_start {
     open my $tmp_log_file_handle, ">", $CONDOR_TEMP_LOG
         or die "Could not create a temporary log file $CONDOR_TEMP_LOG: $!\n";
     say $tmp_log_file_handle strftime("%a, %e-%b-%Y %r INFO  Condor ThreadId=0 Received command to start condor\n", localtime);
-    say $tmp_log_file_handle strftime("")
-
-    $logger->info "Message";
-
-
 }
 
 

@@ -3,7 +3,7 @@ package CondorUtils::Log;
 use v5.34;
 
 sub create($);
-sub info($$);
+sub info($);
 
 # The logging levels I am using
 # 1. FATAL
@@ -20,11 +20,15 @@ my $LEVEL_WARN = 3;
 my $LEVEL_INFO = 4;
 my $LEVEL_DEBUG = 5;
 
-sub info {
+sub info($) {
     return unless $CONFIGURED_LEVEL;                # Return if Logging is turned off
     return if $CONFIGURED_LEVEL > $LEVEL_INFO;      # Don't log above 'info'. So fatal, error, warn and info will be logged but not debug
-    
+    my $thread_id = threads->tid();
+}
 
+sub create() {
+    my $class = shift;
+    return bless {}, $class;
 }
 
 1;
