@@ -39,7 +39,6 @@ my %LEVELS = (
     }
 );
 
-
 my sub hub {
 
     my ($self, $message, $level, $thread_id) = @_;
@@ -49,14 +48,31 @@ my sub hub {
 }
 
 my sub print_log($$$$;$) {
-    # Print the logline
+    # Print the log
     my ($message, $level, $group, $thread_id, $handle) = @_;
+
+    # Generate the actual log line to printed and print it
+    my $log_line = strftime("%a, %e-%b-%Y %r $LEVELS{$level}->{string} $group ThreadId=$thread_id $message", localtime);
     if($handle) {
-        say $handle strftime("%a, %e-%b-%Y %r $LEVELS{$level}->{string} $group ThreadId=$thread_id $message", localtime);
+        say $handle $log_line;
     }
     else {
-        say strftime("%a, %e-%b-%Y %r $level $group ThreadId=$thread_id $message", localtime);
+        say $log_line;
     }
+}
+
+
+# Returns a default logger as a closure
+sub get_default($$) {
+    my %params = @_;
+    my $default_group = $params{default_group};
+    $default_group ||= 'DefaultLogger';         # Set default group for this logger if one isn't given
+    my $default_level = 'DEBUG';                # Used for when a log doesn't have a level
+    
+    return sub {
+
+    }
+    
 }
 
 # Use this sub routine for logging before you're able to setup and get a proper logger
@@ -72,6 +88,7 @@ sub default {
             my $level = 'DEBUG';
             my $message = "Received a log without a group. Will use '$group' as the default group.";
             print_log($message, $level, $group, $thread_id, *STDOUT);
+  
         }
     }
 

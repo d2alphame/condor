@@ -51,6 +51,7 @@ sub command_start {
     my $init_logger = CondorUtils::Logger->create(group => 'Condor', target => '/Users/mac/logs', level => 'DEBUG');
     $init_logger->info('information');
     CondorUtils::Logger::default(level => 'Press breasts', message => 'Good logs');
+    my $default_logger = CondorUtils::Logger::get_default default_group => "My default";
 }
 
 
