@@ -84,7 +84,10 @@ sub get_default($$) {
     # Once a logger is configured, ephemeral logs can be flushed to the log file
     my @ephemeral_logs;
 
-    return sub {
+    # Do this to enforce having only 1 default logger
+    state $default_logger = undef;
+    return $default_logger if $default_logger;
+    $default_logger = sub {
         my %_params = @_;
         my $level;
         my $thread_id = threads->tid;
@@ -143,8 +146,9 @@ sub get_default($$) {
 
         push @ephemeral_logs, $log_line;
         say $log_line;
-    }
+    };
     
+    return $default_logger;
 }
 
 # Use this sub routine for logging before you're able to setup and get a proper logger

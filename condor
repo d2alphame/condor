@@ -43,7 +43,7 @@ sub command_start {
         exit 0;
     }
 
-    # Create the process folder in temp, in case it doesn't exist.
+    # Create the process folder in /tmp, in case it doesn't exist.
     make_path($CONDOR_PROCESS_FOLDER);
     open my $tmp_log_file_handle, ">", $CONDOR_TEMP_LOG
         or die "Could not create a temporary log file $CONDOR_TEMP_LOG: $!\n";
@@ -56,6 +56,7 @@ sub command_start {
     $default_logger->(message => "Print this log.");
     $default_logger->(message => "Also print this log.", level => "Bad level");
     $default_logger->(message => "This is a warning.", level => "WARN");
+
 }
 
 
