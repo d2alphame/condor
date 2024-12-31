@@ -70,14 +70,14 @@ sub default {
         $group = 'DefaultLogger';
         { 
             my $level = 'DEBUG';
-            my $message = "Received a log line without a group. Using '$group' as the default group.";
+            my $message = "Received a log without a group. Will use '$group' as the default group.";
             print_log($message, $level, $group, $thread_id, *STDOUT);
         }
     }
 
     my $message = $params{message};
     unless($message) {
-        $message = "Received a log line without a message.";
+        $message = "Received a log without a message.";
         {
             my $level = 'WARN';
             print_log($message, $level, $group, $thread_id, *STDOUT);
@@ -89,9 +89,11 @@ sub default {
     unless($level) {
         $level = 'DEBUG';
         {
-            my $message = "Received a log line without a log level. Using 'DEBUG' as the log level.";
+            my $message = "Received a log without a log level. Will use 'WARN' as the level.";
             print_log($message, $level, $group, $thread_id, *STDOUT);
         }
+        print_log($message, 'INFO', $group, $thread_id, *STDOUT);
+        return;
     }
 
     # Invalid logging level specified
@@ -102,11 +104,12 @@ sub default {
             print_log($message, $new_level, $group, $thread_id, *STDOUT);
             $message = "Use one of the following logging levels: @{[ keys %LEVELS]}";
             print_log($message, $new_level, $group, $thread_id, *STDOUT);
+            print_log("Will use 'INFO' as the log level for this log", $new_level, $group, $thread_id, *STDOUT);
         }
+        $level = 'INFO';
     }
 
-    
-
+    print_log($message, $level, $group, $thread_id, *STDOUT);
 }
 
 
