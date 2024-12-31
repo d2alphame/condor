@@ -53,8 +53,9 @@ sub command_start {
     CondorUtils::Logger::default(level => 'Press breasts', message => 'Good logs');
     my $default_logger = CondorUtils::Logger::get_default group => "My default";
     $default_logger->();
-    $default_logger->(message => "Print this log");
-    $default_logger->(message => "Also print this log", level => "Bad level");
+    $default_logger->(message => "Print this log.");
+    $default_logger->(message => "Also print this log.", level => "Bad level");
+    $default_logger->(message => "This is a warning.", level => "WARN");
 }
 
 
