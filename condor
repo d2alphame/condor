@@ -57,8 +57,6 @@ sub command_start {
     $default_logger->(message => "Also print this log.", level => "Bad level");
     $default_logger->(message => "This is a warning.", level => "WARN");
     my $d = CondorUtils::Logger::get_default group => "Group D";
-    say $default_logger;
-    say $d;
     $default_logger->(message => "Will hopefully flush", level => "ERROR", flush => $tmp_log_file_handle);
     $default_logger->(message => "This should be fatal.", level => "FATAL");
     $default_logger->(message => "This should also be fatal.", level => "FATAL");
