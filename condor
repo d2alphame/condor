@@ -45,7 +45,7 @@ sub command_start {
 
     # Create the process folder in /tmp, in case it doesn't exist.
     make_path($CONDOR_PROCESS_FOLDER);
-    open my $tmp_log_file_handle, ">", $CONDOR_TEMP_LOG
+    open my $tmp_log_file_handle, ">>", $CONDOR_TEMP_LOG
         or die "Could not create a temporary log file $CONDOR_TEMP_LOG: $!\n";
     say $tmp_log_file_handle strftime("%a, %e-%b-%Y %r INFO  Condor ThreadId=0 Received command to start condor\n", localtime);
     my $init_logger = CondorUtils::Logger->create(group => 'Condor', target => '/Users/mac/logs', level => 'DEBUG');
@@ -56,7 +56,14 @@ sub command_start {
     $default_logger->(message => "Print this log.");
     $default_logger->(message => "Also print this log.", level => "Bad level");
     $default_logger->(message => "This is a warning.", level => "WARN");
-
+    my $d = CondorUtils::Logger::get_default group => "Group D";
+    say $default_logger;
+    say $d;
+    $default_logger->(message => "Will hopefully flush", level => "ERROR", flush => $tmp_log_file_handle);
+    $default_logger->(message => "This should be fatal.", level => "FATAL");
+    $default_logger->(message => "This should also be fatal.", level => "FATAL");
+    my $another_default_logger = CondorUtils::Logger::get_default group => "Another";
+    $another_default_logger->(message => "This will fail.");
 }
 
 
