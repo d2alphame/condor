@@ -36,3 +36,4 @@ inc/
 
 # Custom ignores
 /exps/
+.DS_Store
