@@ -47,10 +47,8 @@ sub command_start {
     make_path($CONDOR_PROCESS_FOLDER);
     open my $tmp_log_file_handle, ">>", $CONDOR_TEMP_LOG
         or die "Could not create a temporary log file $CONDOR_TEMP_LOG: $!\n";
-    say $tmp_log_file_handle strftime("%a, %e-%b-%Y %r INFO  Condor ThreadId=0 Received command to start condor\n", localtime);
     my $init_logger = CondorUtils::Logger->create(group => 'Condor', target => '/Users/mac/logs', level => 'DEBUG');
     $init_logger->info('information');
-    CondorUtils::Logger::default(level => 'Press breasts', message => 'Good logs');
     my $default_logger = CondorUtils::Logger::get_default group => "My default";
     $default_logger->();
     $default_logger->(message => "Print this log.");
