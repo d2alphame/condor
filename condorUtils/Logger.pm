@@ -164,7 +164,7 @@ my sub assemble_log($$$$$$$$) {
         }
         
         if($number_of_default_loggers) {
-            my $log_line assemble_log
+            my $log_line = assemble_log
                 message     => "A default logger has already been created. Will return the existing default logger.",
                 level       => $LEVELS{$default_level}->{string},
                 group       => $group,
