@@ -170,7 +170,7 @@ my sub assemble_log($$$$$$$$) {
                 group       => $group,
                 fthread_id  => sprintf "%04u", threads->tid;
             
-            if($flush_handle) { say $flush_handle $log_line; }
+            if($flush_handle) { say $flush_handle $log_line; push @ephemeral_logs, $log_line; }
             else { say $log_line; }
 
             # Since we already have a default logger. Return it
