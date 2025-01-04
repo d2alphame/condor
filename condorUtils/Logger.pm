@@ -180,7 +180,7 @@ my sub assemble_log($$$$$$$$) {
         }
         $default_level = 'DEBUG';
         $number_of_default_loggers++;
-        $group = $params{group} || 'DefaultLogger';       # Set default group for this logger if one isn't given
+        $group = $params{group} || 'DefaultLogger';       # Set default group for the default logger if one isn't given
 
         # This closure serves as a proxy to the default logger
         return sub {
