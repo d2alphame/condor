@@ -10,6 +10,8 @@ use threads;
 sub create($);
 sub info($);
 
+my $IS_CONFIGURED = 0;                              # Set to 1 if the logger has been configured by calling config() or if parameters were passed to `use`
+
 # Anything greater than 5 will log all
 my $CONFIGURED_LEVEL = '';                          # Set this to an empty string or any false value to disable logging. This has no effect on the default logger
 my %LEVELS = (
@@ -232,5 +234,13 @@ sub create($) {
 }
 
 
+# This will be called whenever we `use` this module
+sub import {
+
+}
+
+sub config {
+
+}
 
 1;
