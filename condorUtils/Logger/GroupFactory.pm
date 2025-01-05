@@ -45,13 +45,12 @@ my %LEVELS = (
 
 
 
-# This must be called before creating any loggers or logger factories. This is for global configurations
+# This must be called before creating any loggers or logger group factories. This is for global configurations
 sub config {
     return if $IS_CONFIGURED;               # Configuration has been done. No need to configure again
     my %params = @_;
     my $will_croak = '';
 
-    
     if(exists $params{level}) {
         $will_croak .= qq(Invalid level '$params{level}' specified. Use one of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL' or use a false value to disable logging.\n)
             unless exists $LEVELS{$params{level}}; 
@@ -83,7 +82,9 @@ sub config {
 
 
 sub import {
-
+    my $class = shift;
+    &config if @_;
 }
+
 
 1;
