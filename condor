@@ -11,6 +11,14 @@ use POSIX;
 use threads;
 
 use CondorUtils::Logger;
+use CondorUtils::Logger::GroupFactory;
+
+CondorUtils::Logger::GroupFactory::config 
+        aggregate_only  => 1,
+        level           => 'Bad level',
+        files           => 3,
+        handles         => 'Oh shit!';
+
 
 my $CONDOR_PROGRAM_NAME = 'condor';
 
