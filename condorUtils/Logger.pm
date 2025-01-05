@@ -236,8 +236,13 @@ sub create($) {
 
 # This will be called whenever we `use` this module
 sub import {
-
+    my $class = shift;
+    return if $class ne __PACKAGE__;    # Return if this subroutine is not being called as a class method or package subroutine
+    return unless @_;                   # Return if no parameters were passed to `use`.
+    my %params = @_;
 }
+
+
 
 sub config {
 

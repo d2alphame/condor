@@ -49,6 +49,7 @@ sub command_start {
         or die "Could not create a temporary log file $CONDOR_TEMP_LOG: $!\n";
     my $init_logger = CondorUtils::Logger->create(group => 'Condor', target => '/Users/mac/logs', level => 'DEBUG');
     $init_logger->info('information');
+    say ref $init_logger;
     my $default_logger = CondorUtils::Logger::get_default group => "My default";
     $default_logger->();
     $default_logger->(message => "Print this log.");
