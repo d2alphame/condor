@@ -13,6 +13,14 @@ use threads;
 use CondorUtils::Logger;
 use CondorUtils::Logger::GroupFactory;
 
+open my $fh, '>>', 'four.log' or die "Could not open four.log: $!\n";
+CondorUtils::Logger::GroupFactory::config 
+        aggregate_only  => 1,
+        level           => 'WARN',
+        files           => [ qw< one.log two.log three.log> ],
+        handles         => [$fh];
+
+
 my $CONDOR_PROGRAM_NAME = 'condor';
 
 my $CONDOR_PROCESS_FOLDER = "/tmp/$CONDOR_PROGRAM_NAME";
