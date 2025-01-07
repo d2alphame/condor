@@ -3,18 +3,18 @@ package CondorUtils::Logger::GroupFactory;
 use v5.34;
 use Carp;
 
-my $FILES;                      # Array ref. File names of files to which logs should be written
-my $HANDLES;                    # Array ref. File handles to which logs should be written
+my $FILES   = [];               # Array ref. File names of files to which logs should be written
+my $HANDLES = [];               # Array ref. File handles to which logs should be written
 
-    # If true, all logs should be written only to the files specified globally (in $FILES and $HANDLE). Logger groups
-    # should not to write their own log files. If false, logger groups can write to additional log files
+# If true, all logs should be written only to the files specified globally (in $FILES and $HANDLE). Logger groups
+# should not write to their own log files. If false, logger groups can write to additional log files
 my $AGGREGATE_ONLY = 1;
 
 my $IS_CONFIGURED = 0;          # Set to true if global configuration has been done already
 
-    # The logging level. One of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'. To disable logging, set this to an empty
-    # string or any false value.
-my $CONFIGURED_LEVEL;
+# The logging level. One of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'. To disable logging, set this to an empty
+# string or any false value. The default is 'DEBUG', which logs all
+my $CONFIGURED_LEVEL = 'DEBUG';
 
 my %LEVELS = (
     FATAL => {
@@ -48,18 +48,23 @@ my %LEVELS = (
 # loggers in that group. If the group doesn't exist, it is created upon request for a logger
 my %LOGGERS;
 
+
+
 # This must be called before creating any loggers. This is for global configurations
 sub config {
     return if $IS_CONFIGURED;               # Configuration has been done. No need to configure again
     my %params = @_;
     my $will_croak = '';
 
-    
+    # Sanity check for the 'level' parameter if it exists
     if(exists $params{level}) {
+        unless($params{level}) {
+            $CONFIGURED_LEVEL = '' ;        # Falsey values disable logging
+        }
+        elsif(not(exists $LEVELS{$params{level}}))
         $will_croak .= qq(Invalid level '$params{level}' specified. Use one of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL' or use a false value to disable logging.\n)
-            unless exists $LEVELS{$params{level}}; 
     }
-    else { $will_croak .= "Specify a global logging level.\n" }
+
 
     # User didn't pass in 'files' or 'handles'
     unless(exists $params{files} || exists $params{handles}) {
@@ -72,14 +77,27 @@ sub config {
         $will_croak .= qq(The 'handles' parameter should be an array ref of file handles to write logs to.\n);
     }
 
-    if(exists $params{aggregate_only}) { $AGGREGATE_ONLY = $params{aggregate_only} };
-    
     croak $will_croak if $will_croak;
 
-    $FILES              = $params{files};
-    $HANDLES            = $params{handles};
+    if(exists $params{aggregate_only}) { $AGGREGATE_ONLY = $params{aggregate_only} };
+
+    $FILES              = $params{files}            if $params{files};
+    $HANDLES            = $params{handles}          if $params{handles};
     $AGGREGATE_ONLY     = $params{aggregate_only};
     $CONFIGURED_LEVEL   = $params{level};
+
+    # If there are file names passed in the 'files' parameter, open them up into handles and add the handles to the
+    # $HANDLES array ref.
+    {
+        my $i = scalar @$HANDLES;
+        for my $fname (@$FILES) {
+            open $HANDLES->[$i], '>>', $fname or $will_croak .= "Could not open file $fname for logging: $!.\n";
+            $i++;
+        }
+        
+    }
+    croak $will_croak if $will_croak;
+
     $IS_CONFIGURED      = 1;
 }
 
