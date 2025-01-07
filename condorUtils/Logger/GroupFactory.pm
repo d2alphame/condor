@@ -43,7 +43,7 @@ my %LEVELS = (
     }
 );
 
-# List of logger groups that have been created. The keys being the names of the groups and the values being the sub
+# Hash of logger groups that have been created. The keys being the names of the groups and the values being the sub
 # routines. If a logger has ever been created in a group, then the same instance is returned for all requests for
 # loggers in that group. If the group doesn't exist, it is created upon request for a logger
 my %LOGGERS;
@@ -85,8 +85,11 @@ sub config {
 
 
 
+# This sub routine is called when this module is `use`d. If configuration data is passed to it, the logging is
+# configured, otherwise it just returns and the user can call config() later
 sub import {
-
+    my $class = shift;
+    config(@_) if @_;
 }
 
 1;
