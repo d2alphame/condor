@@ -55,50 +55,54 @@ sub config {
     return if $IS_CONFIGURED;               # Configuration has been done. No need to configure again
     my %params = @_;
     my $will_croak = '';
+    my $has_files = 0;                      # Set to 1 if user passed 'files' parameter
+    my $has_handles = 0;                    # Set to 1 if user passed 'handles parameter'
 
     # Sanity check for the 'level' parameter if it exists
     if(exists $params{level}) {
         unless($params{level}) {
             $CONFIGURED_LEVEL = '' ;        # Falsey values disable logging
         }
-        elsif(not(exists $LEVELS{$params{level}}))
-        $will_croak .= qq(Invalid level '$params{level}' specified. Use one of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL' or use a false value to disable logging.\n)
+        elsif(not(exists $LEVELS{$params{level}})) {
+            $will_croak .= qq(Invalid level '$params{level}' specified. Use one of 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL' or use a false value to disable logging.\n)
+        }
     }
 
-
-    # User didn't pass in 'files' or 'handles'
-    unless(exists $params{files} || exists $params{handles}) {
-        $will_croak .= qq(Specify either file names in the 'files' parameter and/or file handles in the 'handles' parameter.\n);
-    }
-    if(exists $params{files} && not(ref($params{files}) =~ /ARRAY/)) {
-        $will_croak .= qq(The 'files' parameter should be an array ref of file names to write logs to.\n);
-    }
-    if(exists $params{handles} && not(ref($params{handles}) =~ /ARRAY/)) {
-        $will_croak .= qq(The 'handles' parameter should be an array ref of file handles to write logs to.\n);
+    # Sanity check for the 'files' parameter. If it's present, then ensure it's an array ref
+    if(exists $params{files}) {
+        if(ref($params{files}) =~ /ARRAY/) {
+            $FILES = $params{files};
+            $has_files = 1;
+        }
+        else { $will_croak .= qq(The 'files' parameter should be an array ref of file names to write logs to.\n); }
     }
 
-    croak $will_croak if $will_croak;
+    # Sanity check for the 'handles' parameter. If it's present, it should be an array ref
+    if(exists $params{handles}) {
+        if(ref($params{handles}) =~ /ARRAY/) {
+            $HANDLES = $params{handles};
+            $has_handles = 1;
+        }
+        else { $will_croak .= qq(The 'handles' parameter should be an array ref of file handles to write logs to.\n); }
+    }
+
+    unless($has_files || $has_handles) { 
+        $will_croak .= qq(Pass in a 'files' and/or a 'handles' parameter.\n);
+    }
 
     if(exists $params{aggregate_only}) { $AGGREGATE_ONLY = $params{aggregate_only} };
 
-    $FILES              = $params{files}            if $params{files};
-    $HANDLES            = $params{handles}          if $params{handles};
-    $AGGREGATE_ONLY     = $params{aggregate_only};
-    $CONFIGURED_LEVEL   = $params{level};
-
-    # If there are file names passed in the 'files' parameter, open them up into handles and add the handles to the
-    # $HANDLES array ref.
     {
+        # Open file handles for file names in the $FILES array and add the handles to the $HANDLES array
         my $i = scalar @$HANDLES;
         for my $fname (@$FILES) {
             open $HANDLES->[$i], '>>', $fname or $will_croak .= "Could not open file $fname for logging: $!.\n";
             $i++;
         }
-        
     }
     croak $will_croak if $will_croak;
 
-    $IS_CONFIGURED      = 1;
+    $IS_CONFIGURED = 1;
 }
 
 
