@@ -75,4 +75,56 @@ sub import {
 }
 
 
+# Assembles the log line
+my sub assemble_log($$$$$$$$) {
+    my %params = @_;
+    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{group}] $params{message}", localtime);
+}
+
+
+# Writes the log to the log files
+my sub write_log($) {
+    
+}
+
+
+# Instantiates a logger
+sub new {
+    my ($class, $group) = @_;
+    return bless sub {
+        return unless $CONFIGURED_LEVEL;    # Configured level being false means don't log at all
+        
+        my ($message, $level) = @_;
+        # Don't log if the log's level is greater than the configured level
+        if($LEVELS{$level}{level} > $LEVELS{$CONFIGURED_LEVEL}{level}) { return }
+        
+        my $log_line = assemble_log
+                message     => $message,
+                level       => $LEVELS{level}{string},
+                group       => $group,
+                fthread_id  => sprintf "%04u", threads->tid; 
+
+    }, $class;
+}
+
+sub debug {
+
+}
+
+sub info {
+
+}
+
+sub warn {
+
+}
+
+sub error {
+
+}
+
+sub fatal {
+
+}
+
 1;
