@@ -2,6 +2,8 @@ package CondorUtils::Logger::GroupFactory;
 
 use v5.34;
 use Carp;
+use threads;
+use threads::shared;
 
 my $FILES   = [];               # Array ref. File names of files to which logs should be written
 my $HANDLES = [];               # Array ref. File handles to which logs should be written
