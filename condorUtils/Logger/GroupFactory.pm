@@ -119,21 +119,37 @@ sub import {
 
 
 
-# Call this sub routine to get a logger. The 'group' parameter tells which group the logger should belong to. If a
-# logger already exists in that group, that logger is returned instead, otherwise a new logger is created and
-# returned. It should be noted that the global configurations *must* be done before calling this.
+# Assembles the log line. The parameters are
+# message       =>  The message to log
+# level         =>  The log level
+# group         =>  The group for the log
+# fthread_id    =>  String representation of the thread id. This is usually an unsigned integer padded with zeros to 4
+#                       digits. E.g. '0056'
+my sub assemble_log($$$$$$$$) {
+    my %params = @_;
+    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{group}] $params{message}", localtime);
+}
+
+
+
+
+# Returns a logger. Use the 'name' parameter to specify the name of a logger.
+# If a logger with the specified name already exists, then it is returned, otherwise a logger with that name is created
+# and returned
 sub get_logger {
     my %params = @_;
     my $will_croak = '';
     my $level = $CONFIGURED_LEVEL;
-    my $handle;         # File handle of the file the group
+    my $handle;                          # File handle. Additional file for the logger to write logs to
 
     # The 'name' parameter is the only one that is necessary. 
     if(exists $params{name}) {
-        if(exists $LOGGERS{$params{name}}) { return $LOGGERS{$params{name}} }
+        if(exists $LOGGERS{$params{name}}) { 
+            return $LOGGERS{$params{name}}          # Return the logger with the given name if one already xists.
+        }
     }
     else {
-        croak "Specify a name for the logger with the 'name' parameter to get the logger with that name or create one.\n";
+        croak "Specify a name for the logger with the 'name' parameter to get the logger with that name or to create one.\n";
     }
 
     if(exists $params{handle} && $params{handle}) { $handle   = $params{handle} } 
@@ -158,6 +174,24 @@ sub get_logger {
             }
         }
     }
+
+    # Create a blessed new logger and return it.
+    $LOGGERS{name} = bless sub {
+
+        return unless $level;           # If level is false, then logging is disabled
+        my ($msg, $lvl) = @_;
+
+        return unless $LEVELS{$lvl}{level} > $LEVELS{$level}{level};    # Don't log at higher level
+        
+        my $fthread_id = sprintf "%04u", threads->tid;
+        my $thread = threads->create(
+
+        )
+
+    };
+
+    return $LOGGERS{name}
+
 }
 
 
