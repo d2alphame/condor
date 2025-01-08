@@ -118,4 +118,16 @@ sub import {
     config(@_) if @_;
 }
 
+
+
+# Call this sub routine to get a logger. The 'group' parameter tells which group the logger should belong to. If a
+# logger already exists in that group, that logger is returned instead, otherwise a new logger is created and
+# returned.
+sub get_logger {
+    my %params = @_;
+    if(exists $params{group}) {
+        if(exists $LOGGERS{$params{group}}) { return $LOGGERS{$params{group}} }
+    }
+}
+
 1;
