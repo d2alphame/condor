@@ -54,6 +54,9 @@ my %LOGGERS;
 # This must be called before creating any loggers. This is for global configurations
 sub config {
     return if $IS_CONFIGURED;               # Configuration has been done. No need to configure again
+    return if ref $_[0] eq __PACKAGE__;     # Ignore if sub routine was called as an object method
+    shift if $_[0] eq __PACKAGE__;          # This sub routine was called as a class method using the arrow notation
+
     my %params = @_;
     my $will_croak = '';
     my $has_files = 0;                      # Set to 1 if user passed 'files' parameter
