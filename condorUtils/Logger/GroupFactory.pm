@@ -45,10 +45,9 @@ my %LEVELS = (
     }
 );
 
-# Hash of logger groups that have been created. The keys being the names of the groups and the values being the sub
-# routines. If a logger has ever been created in a group, then the same instance is returned for all requests for
-# loggers in that group. If the group doesn't exist, it is created upon request for a logger
+# Hash of loggers that have been created. The keys being the names of the loggers and the values being the subroutines.
 my %LOGGERS;
+
 
 
 # This must be called before creating any loggers. This is for global configurations
@@ -122,12 +121,45 @@ sub import {
 
 # Call this sub routine to get a logger. The 'group' parameter tells which group the logger should belong to. If a
 # logger already exists in that group, that logger is returned instead, otherwise a new logger is created and
-# returned.
+# returned. It should be noted that the global configurations *must* be done before calling this.
 sub get_logger {
     my %params = @_;
-    if(exists $params{group}) {
-        if(exists $LOGGERS{$params{group}}) { return $LOGGERS{$params{group}} }
+    my $will_croak = '';
+    my $level = $CONFIGURED_LEVEL;
+    my $handle;         # File handle of the file the group
+
+    # The 'name' parameter is the only one that is necessary. 
+    if(exists $params{name}) {
+        if(exists $LOGGERS{$params{name}}) { return $LOGGERS{$params{name}} }
+    }
+    else {
+        croak "Specify a name for the logger with the 'name' parameter to get the logger with that name or create one.\n";
+    }
+
+    if(exists $params{handle} && $params{handle}) { $handle   = $params{handle} } 
+
+    if(exists $params{level}) {
+        unless($params{level}) {
+            $level = '';
+        }
+        elsif(not(exists $LEVELS{$params{level}})) {
+            if($CONFIGURED_LEVEL) { 
+                $level = $CONFIGURED_LEVEL;
+                carp "Invalid log level '$params{level}', using globally configured default '$CONFIGURED_LEVEL'.\n";
+            }
+            else {
+                $level = $CONFIGURED_LEVEL;
+                carp "Invalid log level '$params{level}', logging is globally disabled.\n";
+            }
+        }
+        else {
+            if($LEVELS{$params{level}}{level} > $LEVELS{$CONFIGURED_LEVEL}{level}) {
+                $level = $CONFIGURED_LEVEL;
+            }
+        }
     }
 }
+
+
 
 1;
