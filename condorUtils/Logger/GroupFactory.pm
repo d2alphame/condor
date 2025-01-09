@@ -3,7 +3,7 @@ package CondorUtils::Logger::GroupFactory;
 use v5.34;
 use Carp;
 use threads;
-use threads::shared;
+use Thread::Queue;
 
 my $FILES   = [];               # Array ref. File names of files to which logs should be written
 my $HANDLES = [];               # Array ref. File handles to which logs should be written
@@ -47,6 +47,15 @@ my %LEVELS = (
 
 # Hash of loggers that have been created. The keys being the names of the loggers and the values being the subroutines.
 my %LOGGERS;
+
+
+
+# For further initializations. Call this after configurations
+my sub init {
+    
+}
+
+
 
 
 
@@ -122,12 +131,12 @@ sub import {
 # Assembles the log line. The parameters are
 # message       =>  The message to log
 # level         =>  The log level
-# group         =>  The group for the log
+# name          =>  The name of the logger
 # fthread_id    =>  String representation of the thread id. This is usually an unsigned integer padded with zeros to 4
 #                       digits. E.g. '0056'
 my sub assemble_log($$$$$$$$) {
     my %params = @_;
-    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{group}] $params{message}", localtime);
+    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{name}] $params{message}", localtime);
 }
 
 
@@ -140,6 +149,7 @@ sub get_logger {
     my %params = @_;
     my $will_croak = '';
     my $level = $CONFIGURED_LEVEL;
+    my $name;
     my $handle;                          # File handle. Additional file for the logger to write logs to
 
     # The 'name' parameter is the only one that is necessary. 
@@ -151,6 +161,7 @@ sub get_logger {
     else {
         croak "Specify a name for the logger with the 'name' parameter to get the logger with that name or to create one.\n";
     }
+    $name = $params{name};
 
     if(exists $params{handle} && $params{handle}) { $handle   = $params{handle} } 
 
@@ -185,8 +196,14 @@ sub get_logger {
         
         my $fthread_id = sprintf "%04u", threads->tid;
         my $thread = threads->create(
-
-        )
+            sub {
+                my $log_line = assemble_log
+                        message     => $msg,
+                        name        => $name,
+                        fthread_id  => $fthread_id,
+                        level       => $lvl;
+            }
+        );
 
     };
 
