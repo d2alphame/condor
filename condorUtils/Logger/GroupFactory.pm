@@ -48,14 +48,32 @@ my %LEVELS = (
 # Hash of loggers that have been created. The keys being the names of the loggers and the values being the subroutines.
 my %LOGGERS;
 
+my @printing_threads;                       # An array of threads, one for each file handle to write logs to
+my @thread_queues;                          # An array of queues for printing. One for each printing threads
 
 
-# For further initializations. Call this after configurations
+
+# The config() subroutine will call this for further configurations
 my sub init {
-    
+    return if @_;               # This is meant to be called as a package subroutine
+    my $ubound = scalar(@$HANDLES) - 1;
+    for(0..$ubound) {
+        $thread_queues[$_]      = Thread::Queue->new();
+        $printing_threads[$_]   = threads->create(
+            sub {
+                my $index = shift;
+                {
+                    my $q = $thread_queues[$index]->dequeue;
+                    if(defined $q) { 
+                        my $handle = $HANDLES->[$index];
+                        say $handle $q;
+                    }
+                    redo;
+                }
+            }, $_
+        )->detach;
+    }
 }
-
-
 
 
 
@@ -113,7 +131,7 @@ sub config {
         }
     }
     croak $will_croak if $will_croak;
-
+    init();
     $IS_CONFIGURED = 1;
 }
 
@@ -195,15 +213,17 @@ sub get_logger {
         return unless $LEVELS{$lvl}{level} > $LEVELS{$level}{level};    # Don't log at higher level
         
         my $fthread_id = sprintf "%04u", threads->tid;
-        my $thread = threads->create(
+        threads->create(
             sub {
                 my $log_line = assemble_log
                         message     => $msg,
                         name        => $name,
                         fthread_id  => $fthread_id,
                         level       => $lvl;
+
+                print $handle $log_line if($handle);
             }
-        );
+        )->detach;
 
     };
 
