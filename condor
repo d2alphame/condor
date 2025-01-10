@@ -21,6 +21,8 @@ CondorUtils::Logger::GroupFactory::config
         handles         => [$fh];
 
 
+
+
 my $CONDOR_PROGRAM_NAME = 'condor';
 
 my $CONDOR_PROCESS_FOLDER = "/tmp/$CONDOR_PROGRAM_NAME";

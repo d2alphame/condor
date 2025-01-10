@@ -219,18 +219,41 @@ sub get_logger {
                         message     => $msg,
                         name        => $name,
                         fthread_id  => $fthread_id,
-                        level       => $lvl;
+                        level       => $LEVELS{$lvl}{string};
 
-                print $handle $log_line if($handle);
+                async { print $handle $log_line if($handle) };
+                for my $queue(@thread_queues) { $_->enqueue($log_line) }
             }
         )->detach;
 
     };
 
     return $LOGGERS{name}
-
 }
 
 
+sub debug {
+    my ($self, $message) = @_;
+    $self->($message, 'DEBUG');    
+}
 
+sub info {
+    my ($self, $message) = @_;
+    $self->($message, 'INFO');
+}
+
+sub  warn {
+    my ($self, $message) = @_;
+    $self->($message, 'WARN');
+}
+
+sub error {
+    my ($self, $message) = @_;
+    $self->($message, 'ERROR');
+}
+
+sub fatal {
+    my ($self, $message) = @_;
+    $self->($message, 'FATAL');
+}
 1;
