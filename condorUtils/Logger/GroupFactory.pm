@@ -57,20 +57,21 @@ my @thread_queues;                          # An array of queues for printing. O
 # The config() subroutine will call this for further configurations
 my sub init {
     return if @_;               # This is meant to be called as a package subroutine
-    # my $ubound = scalar(@$HANDLES) - 1;
-    my $ubound = scalar(@$FILES) - 1;
+
+    my $ubound = scalar(@$HANDLES) - 1;
     for my $index (0..$ubound) {
         $thread_queues[$index] = Thread::Queue->new();
         my $handle = $HANDLES->[$index];
         threads->create(
             sub {
-                my ($idx, $file) = @_;
-                open my $handle, ">>", $file
-                        or croak "Could not open file $file: $!\n";
+                my ($idx, $hdl) = @_;
                 while(1) {
                     my $q = $thread_queues[$idx]->dequeue;
-                    if(defined $q) { print $handle $q; }
-                   sleep 1;
+                    if(defined $q) {
+                        say $hdl $q;
+                        # This needs to be done so that the log can appear IMMEDIATELY in the log file on disk
+                        $hdl->flush;
+                    }
                 }
                 # while(1) {
                 #     say $handle "Success!!!!";
@@ -92,7 +93,7 @@ my sub init {
                 #     # }
                 #     # redo;
                 # }
-            }, $index, $FILES->[$index]
+            }, $index, $HANDLES->[$index]
         )->detach;
     }
 }
