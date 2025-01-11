@@ -69,54 +69,14 @@ my sub init {
                     my $q = $thread_queues[$idx]->dequeue;
                     if(defined $q) {
                         say $hdl $q;
-                        # This needs to be done so that the log can appear IMMEDIATELY in the log file on disk
+                        # This flush needs to be done so that the log can appear IMMEDIATELY in the log file on disk
                         $hdl->flush;
                     }
                 }
-                # while(1) {
-                #     say $handle "Success!!!!";
-                #     sleep 1;
-                # } 
-                # {
-                #     # say "Got something. Got $hdl at index $idx";
-                #     # say $hdl "Will write this";
-                #     my $h = $HANDLES->[$idx];
-                #     say "$h";
-                #     say $h "What do I do now?";
-                #     sleep 1;
-                #     redo
-                #     # my $q = $thread_queues[$idx]->dequeue;
-                #     # if(defined $q) { 
-                #     #     #my $handle = $HANDLES->[$idx];
-                #     #     #say $handle $q;
-                #     #     say $h $q;
-                #     # }
-                #     # redo;
-                # }
             }, $index, $HANDLES->[$index]
         )->detach;
     }
 }
-
-
-
-# my sub start_threads {
-#     my ($file, $index) = @_;
-# 
-#     open my $handle, '>>', $file
-#         or croak "Could not open file $file: $!\n";
-#     {
-#         #my $q = $thread_queues[$index]->dequeue;
-#         say $handle "Something";
-#     #     if(defined $q) {
-#     #         #say $handle $q;
-#     #         say $handle "Got something";
-#     #     }
-#     #     #redo;
-#     }
-# }
-
-
 
 
 
@@ -174,28 +134,6 @@ sub config {
         $i++;
     }
     
-    # Create a thread for each filename passed.
-    # {
-    #     my $ubound = scalar(@$FILES) - 1;
-    #     for my $i(0..$ubound) {
-    #         $thread_queues[$i] = Thread::Queue->new;
-    #         threads->create(
-    #             sub {
-    #                 my ($file, $index) = @_;
-    #                 open my $handle, '>>', $file
-    #                     or croak "Could not open file $file: $!.\n";
-    #                 {
-    #                     # my $q = $thread_queues[$index]->dequeue;
-    #                     # if(defined $q) {
-    #                     #     say $handle $q;
-    #                     # }
-    #                     # redo;
-    #                     say $handle "Cheers";
-    #                 } 
-    #             }, $FILES->[$i], $i
-    #         )->detach
-    #     }
-    # }
     init();
     $IS_CONFIGURED = 1;
 }
