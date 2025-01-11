@@ -56,15 +56,22 @@ my @thread_queues;                          # An array of queues for printing. O
 
 # The config() subroutine will call this for further configurations
 my sub init {
-
     return if @_;               # This is meant to be called as a package subroutine
     my $ubound = scalar(@$HANDLES) - 1;
     for my $index (0..$ubound) {
-        $thread_queues[$index]      = Thread::Queue->new();
-        $printing_threads[$index]   = threads->create(
+        $thread_queues[$index] = Thread::Queue->new();
+        my $handle = $HANDLES->[$index];
+        threads->create(
             sub {
-                my ($idx, $h) = @_;
+                my ($idx, $hdl) = @_;
                 {
+                    # say "Got something. Got $hdl at index $idx";
+                    # say $hdl "Will write this";
+                    my $h = $HANDLES->[$idx];
+                    say "$h";
+                    say $h "What do I do now?";
+                    sleep 1;
+                    redo
                     # my $q = $thread_queues[$idx]->dequeue;
                     # if(defined $q) { 
                     #     #my $handle = $HANDLES->[$idx];
@@ -73,7 +80,7 @@ my sub init {
                     # }
                     # redo;
                 }
-            }, $index, $HANDLES->[$index]
+            }, $index, $handle
         )->detach;
     }
 }
@@ -147,6 +154,13 @@ sub config {
 
     croak $will_croak if $will_croak;
 
+    my $i = scalar @$HANDLES;
+    for my $file(@$FILES) {
+        open $HANDLES->[$i], ">>", $file
+                or croak "Could not open file $file: $!\n";
+        $i++;
+    }
+    
     # Create a thread for each filename passed.
     # {
     #     my $ubound = scalar(@$FILES) - 1;
@@ -272,7 +286,7 @@ sub import {
     my ($caller_package, $caller_filename, $caller_lineno) = caller;
     {
         no strict 'refs'; 
-        *{$caller_package . '::get_logger'} = \&get_logger
+        *{$caller_package . '::get_logger'} = \&get_logger;
     }
     config(@_) if @_;
 }
