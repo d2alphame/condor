@@ -65,13 +65,13 @@ my sub init {
             sub {
                 my ($idx, $h) = @_;
                 {
-                    my $q = $thread_queues[$idx]->dequeue;
-                    if(defined $q) { 
-                        #my $handle = $HANDLES->[$idx];
-                        #say $handle $q;
-                        say $h $q;
-                    }
-                    redo;
+                    # my $q = $thread_queues[$idx]->dequeue;
+                    # if(defined $q) { 
+                    #     #my $handle = $HANDLES->[$idx];
+                    #     #say $handle $q;
+                    #     say $h $q;
+                    # }
+                    # redo;
                 }
             }, $index, $HANDLES->[$index]
         )->detach;
