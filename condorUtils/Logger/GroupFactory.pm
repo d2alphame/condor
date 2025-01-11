@@ -49,7 +49,6 @@ my %LEVELS = (
 # Hash of loggers that have been created. The keys being the names of the loggers and the values being the subroutines.
 my %LOGGERS;
 
-my @printing_threads;                       # An array of threads, one for each file handle to write logs to
 my @thread_queues;                          # An array of queues for printing. One for each printing threads
 
 
@@ -215,8 +214,8 @@ sub get_logger {
                         fthread_id  => $fthread_id,
                         level       => $LEVELS{$lvl}{string};
 
-                async { say $handle $log_line if($handle) };
                 for my $queue(@thread_queues) { $queue->enqueue($log_line); }
+                async { say $handle $log_line if($handle) };
             }
         )->detach;
 
