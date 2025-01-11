@@ -1,9 +1,10 @@
 package CondorUtils::Logger::GroupFactory;
 
 use v5.34;
-use Carp;
 use threads;
+use Carp;
 use Thread::Queue;
+use POSIX;
 
 my $FILES   = [];               # Array ref. File names of files to which logs should be written
 my $HANDLES = [];               # Array ref. File handles to which logs should be written
@@ -55,25 +56,47 @@ my @thread_queues;                          # An array of queues for printing. O
 
 # The config() subroutine will call this for further configurations
 my sub init {
+
     return if @_;               # This is meant to be called as a package subroutine
     my $ubound = scalar(@$HANDLES) - 1;
-    for(0..$ubound) {
-        $thread_queues[$_]      = Thread::Queue->new();
-        $printing_threads[$_]   = threads->create(
+    for my $index (0..$ubound) {
+        $thread_queues[$index]      = Thread::Queue->new();
+        $printing_threads[$index]   = threads->create(
             sub {
-                my $index = shift;
+                my ($idx, $h) = @_;
                 {
-                    my $q = $thread_queues[$index]->dequeue;
+                    my $q = $thread_queues[$idx]->dequeue;
                     if(defined $q) { 
-                        my $handle = $HANDLES->[$index];
-                        say $handle $q;
+                        #my $handle = $HANDLES->[$idx];
+                        #say $handle $q;
+                        say $h $q;
                     }
                     redo;
                 }
-            }, $_
+            }, $index, $HANDLES->[$index]
         )->detach;
     }
 }
+
+
+
+# my sub start_threads {
+#     my ($file, $index) = @_;
+# 
+#     open my $handle, '>>', $file
+#         or croak "Could not open file $file: $!\n";
+#     {
+#         #my $q = $thread_queues[$index]->dequeue;
+#         say $handle "Something";
+#     #     if(defined $q) {
+#     #         #say $handle $q;
+#     #         say $handle "Got something";
+#     #     }
+#     #     #redo;
+#     }
+# }
+
+
 
 
 
@@ -122,27 +145,36 @@ sub config {
 
     if(exists $params{aggregate_only}) { $AGGREGATE_ONLY = $params{aggregate_only} };
 
-    {
-        # Open file handles for file names in the $FILES array and add the handles to the $HANDLES array
-        my $i = scalar @$HANDLES;
-        for my $fname (@$FILES) {
-            open $HANDLES->[$i], '>>', $fname or $will_croak .= "Could not open file $fname for logging: $!.\n";
-            $i++;
-        }
-    }
     croak $will_croak if $will_croak;
+
+    # Create a thread for each filename passed.
+    # {
+    #     my $ubound = scalar(@$FILES) - 1;
+    #     for my $i(0..$ubound) {
+    #         $thread_queues[$i] = Thread::Queue->new;
+    #         threads->create(
+    #             sub {
+    #                 my ($file, $index) = @_;
+    #                 open my $handle, '>>', $file
+    #                     or croak "Could not open file $file: $!.\n";
+    #                 {
+    #                     # my $q = $thread_queues[$index]->dequeue;
+    #                     # if(defined $q) {
+    #                     #     say $handle $q;
+    #                     # }
+    #                     # redo;
+    #                     say $handle "Cheers";
+    #                 } 
+    #             }, $FILES->[$i], $i
+    #         )->detach
+    #     }
+    # }
     init();
     $IS_CONFIGURED = 1;
 }
 
 
 
-# This sub routine is called when this module is `use`d. If configuration data is passed to it, the logging is
-# configured, otherwise it just returns and the user can call config() later
-sub import {
-    my $class = shift;
-    config(@_) if @_;
-}
 
 
 
@@ -156,7 +188,6 @@ my sub assemble_log($$$$$$$$) {
     my %params = @_;
     return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{name}] $params{message}", localtime);
 }
-
 
 
 
@@ -201,16 +232,17 @@ sub get_logger {
             if($LEVELS{$params{level}}{level} > $LEVELS{$CONFIGURED_LEVEL}{level}) {
                 $level = $CONFIGURED_LEVEL;
             }
+            else { $level = $params{level} }
         }
     }
 
     # Create a blessed new logger and return it.
     $LOGGERS{name} = bless sub {
-
         return unless $level;           # If level is false, then logging is disabled
-        my ($msg, $lvl) = @_;
 
-        return unless $LEVELS{$lvl}{level} > $LEVELS{$level}{level};    # Don't log at higher level
+        my ($msg, $lvl) = @_;
+        
+        return if $LEVELS{$lvl}{level} > $LEVELS{$level}{level};    # Don't log at higher level
         
         my $fthread_id = sprintf "%04u", threads->tid;
         threads->create(
@@ -221,8 +253,8 @@ sub get_logger {
                         fthread_id  => $fthread_id,
                         level       => $LEVELS{$lvl}{string};
 
-                async { print $handle $log_line if($handle) };
-                for my $queue(@thread_queues) { $_->enqueue($log_line) }
+                async { say $handle $log_line if($handle) };
+                for my $queue(@thread_queues) { $queue->enqueue($log_line); }
             }
         )->detach;
 
@@ -230,6 +262,21 @@ sub get_logger {
 
     return $LOGGERS{name}
 }
+
+
+
+# This sub routine is called when this module is `use`d. If configuration data is passed to it, the logging is
+# configured, otherwise it just returns and the user can call config() later
+sub import {
+    my $class = shift;
+    my ($caller_package, $caller_filename, $caller_lineno) = caller;
+    {
+        no strict 'refs'; 
+        *{$caller_package . '::get_logger'} = \&get_logger
+    }
+    config(@_) if @_;
+}
+
 
 
 sub debug {
@@ -256,4 +303,6 @@ sub fatal {
     my ($self, $message) = @_;
     $self->($message, 'FATAL');
 }
+
+
 1;

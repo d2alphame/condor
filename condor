@@ -16,12 +16,15 @@ use CondorUtils::Logger::GroupFactory;
 open my $fh, '>>', 'four.log' or die "Could not open four.log: $!\n";
 CondorUtils::Logger::GroupFactory::config 
         aggregate_only  => 1,
-        level           => 'WARN',
+        level           => 'DEBUG',
         files           => [ qw< one.log two.log three.log> ],
         handles         => [$fh];
 
-
-
+my $logger = get_logger(name => 'A Logger', level => 'ERROR');
+$logger->fatal("Success");
+$logger->fatal("Another Log");
+$logger->error("A third log");
+sleep 5;
 
 my $CONDOR_PROGRAM_NAME = 'condor';
 
