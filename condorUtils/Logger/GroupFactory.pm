@@ -57,30 +57,39 @@ my @thread_queues;                          # An array of queues for printing. O
 # The config() subroutine will call this for further configurations
 my sub init {
     return if @_;               # This is meant to be called as a package subroutine
-    my $ubound = scalar(@$HANDLES) - 1;
+    # my $ubound = scalar(@$HANDLES) - 1;
+    my $ubound = scalar(@$FILES) - 1;
     for my $index (0..$ubound) {
         $thread_queues[$index] = Thread::Queue->new();
         my $handle = $HANDLES->[$index];
         threads->create(
             sub {
-                my ($idx, $hdl) = @_;
-                {
-                    # say "Got something. Got $hdl at index $idx";
-                    # say $hdl "Will write this";
-                    my $h = $HANDLES->[$idx];
-                    say "$h";
-                    say $h "What do I do now?";
-                    sleep 1;
-                    redo
-                    # my $q = $thread_queues[$idx]->dequeue;
-                    # if(defined $q) { 
-                    #     #my $handle = $HANDLES->[$idx];
-                    #     #say $handle $q;
-                    #     say $h $q;
-                    # }
-                    # redo;
-                }
-            }, $index, $handle
+                my ($idx, $file) = @_;
+                open my $handle, ">>", $file
+                        or croak "Could not open file $file: $!\n";
+                say $handle "Got shit";
+                sleep 1;
+                # while(1) {
+                #     say $handle "Success!!!!";
+                #     sleep 1;
+                # } 
+                # {
+                #     # say "Got something. Got $hdl at index $idx";
+                #     # say $hdl "Will write this";
+                #     my $h = $HANDLES->[$idx];
+                #     say "$h";
+                #     say $h "What do I do now?";
+                #     sleep 1;
+                #     redo
+                #     # my $q = $thread_queues[$idx]->dequeue;
+                #     # if(defined $q) { 
+                #     #     #my $handle = $HANDLES->[$idx];
+                #     #     #say $handle $q;
+                #     #     say $h $q;
+                #     # }
+                #     # redo;
+                # }
+            }, $index, $FILES->[$index]
         )->detach;
     }
 }
@@ -189,9 +198,6 @@ sub config {
 
 
 
-
-
-
 # Assembles the log line. The parameters are
 # message       =>  The message to log
 # level         =>  The log level
@@ -273,7 +279,6 @@ sub get_logger {
         )->detach;
 
     };
-
     return $LOGGERS{name}
 }
 
@@ -317,6 +322,7 @@ sub fatal {
     my ($self, $message) = @_;
     $self->($message, 'FATAL');
 }
+
 
 
 1;

@@ -20,7 +20,7 @@ CondorUtils::Logger::GroupFactory::config
         files           => [ qw< one.log two.log three.log> ],
         handles         => [$fh];
 
-my $logger = get_logger(name => 'A Logger', level => 'ERROR');
+my $logger = get_logger(name => 'A Logger', level => 'DEBUG');
 $logger->fatal("Success");
 $logger->fatal("Another Log");
 $logger->error("A third log");
