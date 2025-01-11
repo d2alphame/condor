@@ -67,8 +67,11 @@ my sub init {
                 my ($idx, $file) = @_;
                 open my $handle, ">>", $file
                         or croak "Could not open file $file: $!\n";
-                say $handle "Got shit";
-                sleep 1;
+                while(1) {
+                    my $q = $thread_queues[$idx]->dequeue;
+                    if(defined $q) { print $handle $q; }
+                   sleep 1;
+                }
                 # while(1) {
                 #     say $handle "Success!!!!";
                 #     sleep 1;
