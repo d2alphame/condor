@@ -20,7 +20,8 @@ CondorUtils::Logger::GroupFactory::config
         files           => [ qw< one.log two.log three.log> ],
         handles         => [$fh];
 
-my $logger = get_logger(name => 'A Logger', level => 'DEBUG');
+open my $another_handle, ">>", "five.log" or die "Could not open five.log: $!\n"; 
+my $logger = get_logger(name => 'A Logger', level => 'DEBUG', handle => $another_handle);
 $logger->fatal("Success");
 $logger->fatal("Another Log");
 $logger->error("A third log");
