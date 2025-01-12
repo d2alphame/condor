@@ -214,9 +214,14 @@ sub get_logger {
                         fthread_id  => $fthread_id,
                         level       => $LEVELS{$lvl}{string};
 
-                for my $queue(@thread_queues) { $queue->enqueue($log_line); }
-                my $thr = async { say $handle $log_line if($handle && not($AGGREGATE_ONLY)) };
+                my $thr = async { 
+                    if($handle && not($AGGREGATE_ONLY)) {
+                        say $handle $log_line;
+                        $handle->flush;
+                    }
+                };
                 $thr->detach;
+                for my $queue(@thread_queues) { $queue->enqueue($log_line); }
             }
         )->detach;
 
