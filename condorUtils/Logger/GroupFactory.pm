@@ -47,7 +47,7 @@ my %LEVELS = (
 );
 
 # Hash of loggers that have been created. The keys being the names of the loggers and the values being the subroutines.
-my %LOGGERS;
+my %LOGGERS :shared;
 
 my @thread_queues;                          # An array of queues for printing. One for each printing threads
 
@@ -173,7 +173,7 @@ sub get_logger {
     }
     $name = $params{name};
 
-    if(exists $params{handle} && $params{handle}) { $handle   = $params{handle} } 
+    if(exists $params{handle} && $params{handle}) { $handle = $params{handle} } 
 
     if(exists $params{level}) {
         unless($params{level}) {
