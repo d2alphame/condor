@@ -16,7 +16,7 @@ my @LEVELS = qw(
 );
 my %LEVELSH = map { $LEVELS[$_] => $_ + 1 } 0..$#LEVELS;
 
-my $IS_CONFIGURED       = '';
+my $IS_CONFIGURED       = 0;
 my $CONFIGURED_LEVEL    = $LEVELS[-1];          # Default to the highest level
 my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
@@ -30,18 +30,70 @@ my sub ConfigureLoggers {
     return unless @_;                           # The user provided no configs.
 
     # Do sanity checks 
-    my @configs = @_;
+    my %configs = @_;
+    
+    my $has_handles = 0;                        # Set if 'handles' is passed in as parameter
+    my $has_files = 0;                          # Set if 'files' is passed in as parameter
+    my $will_croak = '';                        # This is for accumulating errors
+    my $loggers;
+    
+    if(defined $configs{handles}) {
+        if(ref $configs{handles} eq 'ARRAY'){
+            push @HANDLES, $_ for @{$configs{handles}};
+            $has_handles = 1;
+        }
+        else { $will_croak .= "If specifying 'handles', it must be an array ref.\n" }
+    }
+    if(defined $configs{files}) {
+        if(ref $configs{files} eq 'ARRAY'){
+            for my $file (@{$configs{files}}) {
+                open my $fh, ">>", $file or $will_croak .= "Cannot open $file: $!\n";
+                push @HANDLES, $fh;
+            }
+            $has_files = 1;
+        }
+        else { $will_croak .= "If specifying 'files', it must be an array ref.\n" }
+    }
+    unless($has_handles || $has_files) { $will_croak .= "You must specify at least one of 'handles' or 'files'.\n" }
+    if(defined $configs{loggers}) {
+        if(ref $configs{loggers} eq 'HASH') {
+            $loggers = $configs{loggers};
+            for my $logger_name (keys %$loggers){
+                # Croak if the 'logger_name' does not match what we determine is a valid logger name
+                if($logger_name !~ /^[A-Za-z][A-Za-z0-9]*$/) {
+                    $will_croak .= "Invalid logger name '$logger_name'. Logger names must start with a letter and contain only letters and numbers.\n";
+                }
+            }
+        }
+        else { $will_croak .= "If specifying 'loggers', it must be a hash ref.\n" }
+    }
+    else {
+        # Define a default logger if none are provided
+        $loggers = { 'default' => {} };
+    }
+
+    croak $will_croak if $will_croak;           # Croak if we have any accumulated errors
+
     if(defined $configs{aggregate_only}) { $AGGREGATE_ONLY = $configs{aggregate_only} }
     if(defined $configs{level}) {
         if(exists $LEVELSH{$configs{level}}) {
-            say "Invalid logging level: $configs{level}. Using default level $CONFIGURED_LEVEL";
+            $CONFIGURED_LEVEL = $configs{level}
         }
-        else { $CONFIGURED_LEVEL = $configs{level} }
+        else { say "Invalid logging level: $configs{level}. Using default level $CONFIGURED_LEVEL" }
     }
 
-
-
-
+    {
+        no strict 'refs';
+        my $logger_name;
+        my $config;
+        while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
+            for my $lvl (@LEVELS) {
+                *{$caller_package . "::$logger_name" . "::$lvl"} = sub {
+                    say "Got $l";
+                }
+            }
+        }
+    }
 
     $IS_CONFIGURED = 1;
 }
