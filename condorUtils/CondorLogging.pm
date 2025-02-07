@@ -88,8 +88,8 @@ my sub ConfigureLoggers {
         my $config;
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
             for my $lvl (@LEVELS) {
-                *{$caller_package . "::$logger_name" . "::$lvl"} = sub {
-                    say "Got $l";
+                *{$logger_name . "::$lvl"} = sub {
+                    say "Got $lvl for $logger_name";
                 }
             }
         }
@@ -116,5 +116,13 @@ sub import {
 }
 
 
+
+my sub $_per_logger_configuration {
+    return sub {
+        # Return the level if called in scalar context
+        # Return a hash if called in list context
+        return ...
+    }
+}
 
 1;
