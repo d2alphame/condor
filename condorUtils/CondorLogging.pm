@@ -86,7 +86,42 @@ my sub ConfigureLoggers {
         no strict 'refs';
         my $logger_name;
         my $config;
+        my $l;
+        my $h = undef;
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
+            # Check and validate 'level' for each logger
+            if(defined $config->{level}){
+                if(exists $LEVELSH{$config->{level}}) { 
+                    $l = $config->{level}
+                }
+                else {
+                    say "Invalid logging level: '$config->{level}' in logger: '$logger_name'. Using default level '$CONFIGURED_LEVEL'";
+                    $l = $CONFIGURED_LEVEL;
+                }
+            }
+            else {
+                $l = $CONFIGURED_LEVEL;
+            }
+
+
+
+
+
+            # Check and validate 'handle' for each logger
+            $h = undef;
+            if(defined($config->{handle})){
+                $h = $config->{handle};
+            }
+            if(defined($config->{file})) {
+                if(defined $h){
+                    say "Found both 'handle' and 'file' parameters in logger '$logger_name'. Using the 'handle' as the default"
+                }
+                else {
+                    open $h, '>>', $config->{file}
+                        or say "Ignoring the 'file' parameter of logger '$logger_name' because it could not be opened for logging: $!"
+                }
+            }
+
             for my $lvl (@LEVELS) {
                 *{$logger_name . "::$lvl"} = sub {
                     say "Got $lvl for $logger_name";
@@ -117,12 +152,12 @@ sub import {
 
 
 
-my sub $_per_logger_configuration {
-    return sub {
-        # Return the level if called in scalar context
-        # Return a hash if called in list context
-        return ...
-    }
-}
+# my sub $_per_logger_configuration {
+#     return sub {
+#         # Return the level if called in scalar context
+#         # Return a hash if called in list context
+#         return ...
+#     }
+# }
 
 1;
