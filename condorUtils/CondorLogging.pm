@@ -143,14 +143,11 @@ my sub ConfigureLoggers {
                     my $self = shift;
                     my $msg = shift;
 
-
-                    say "Configured level: $CONFIGURED_LEVEL";
-                    say "Logger level: $level";
-                    say "This level: $l";
-
                     if($LEVELSH{$l} <= $LEVELSH{$lvl}) { 
-                        say $hdl $msg;
-                        #$hdl->flush;
+                        if($hdl){
+                            say $hdl $msg;
+                            $hdl->flush;
+                        }
                     }
                     say "Got $l for $logger_name";
                 }
