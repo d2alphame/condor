@@ -87,7 +87,7 @@ my sub ConfigureLoggers {
         my $logger_name;
         my $config;
         my $level;
-        my $handle = undef;
+        my $handle;
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
             # Check and validate 'level' for each logger
             if(defined $config->{level}){
@@ -104,6 +104,7 @@ my sub ConfigureLoggers {
             }
 
             # Check and validate 'handle' for each logger
+            $handle = undef;
             if(defined($config->{handle})){
                 $handle = $config->{handle};
             }
@@ -118,13 +119,12 @@ my sub ConfigureLoggers {
             }
 
             for my $l (@LEVELS) {
-                my $logger_level = $configs{loggers}{$logger_name}{level} // $CONFIGURED_LEVEL;
-                if($logger_level > $CONFIGURED_LEVEL) {
+                my $logger_level = $config->{level} // $CONFIGURED_LEVEL;
+                if($LEVELSH{$logger_level} > $LEVELSH{$CONFIGURED_LEVEL}) {
                     $logger_level = $CONFIGURED_LEVEL;
                 }
-                say "$logger_name: $logger_level";
-                *{$logger_name . "::$lvl"} = sub {
-                    say "Got $lvl for $logger_name";
+                *{$logger_name . "::$l"} = sub {
+                    say "Got $l for $logger_name";
                 }
             }
         }
