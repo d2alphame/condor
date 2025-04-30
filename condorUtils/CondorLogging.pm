@@ -21,6 +21,14 @@ my $CONFIGURED_LEVEL    = $LEVELS[-1];          # Default to the highest level
 my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
 
+# Subroutine to validate logging levels
+my sub validate_level($) {
+    my $level = shift;
+    return 0 unless defined $level;
+    return 0 unless exists $LEVELSH{$level};
+    return 1;
+}
+
 
 # This is used to configure loggers.
 my sub ConfigureLoggers {
@@ -75,6 +83,7 @@ my sub ConfigureLoggers {
     croak $will_croak if $will_croak;           # Croak if we have any accumulated errors
 
     if(defined $configs{aggregate_only}) { $AGGREGATE_ONLY = $configs{aggregate_only} }
+    # unless(validate_level $configs{level}){ say "Invalid logging level: $configs{level}. Using default level $CONFIGURED_LEVEL" }
     if(defined $configs{level}) {
         if(exists $LEVELSH{$configs{level}}) {
             $CONFIGURED_LEVEL = $configs{level}
