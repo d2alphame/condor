@@ -127,12 +127,31 @@ my sub ConfigureLoggers {
                 }
             }
 
+            # Between a logger's logging level and the configured level, always use the lower level
+            if($LEVELSH{$level} > $LEVELSH{$CONFIGURED_LEVEL}) {
+                $level = $CONFIGURED_LEVEL;
+            }
+
             for my $l (@LEVELS) {
-                my $logger_level = $config->{level} // $CONFIGURED_LEVEL;
-                if($LEVELSH{$logger_level} > $LEVELSH{$CONFIGURED_LEVEL}) {
-                    $logger_level = $CONFIGURED_LEVEL;
-                }
+                # my $logger_level = $config->{level} // $CONFIGURED_LEVEL;
+                # if($LEVELSH{$logger_level} > $LEVELSH{$CONFIGURED_LEVEL}) {
+                #     $logger_level = $CONFIGURED_LEVEL;
+                # }
                 *{$logger_name . "::$l"} = sub {
+                    my $lvl = $level;
+                    my $hdl = $handle;
+                    my $self = shift;
+                    my $msg = shift;
+
+
+                    say "Configured level: $CONFIGURED_LEVEL";
+                    say "Logger level: $level";
+                    say "This level: $l";
+
+                    if($LEVELSH{$l} <= $LEVELSH{$lvl}) { 
+                        say $hdl $msg;
+                        #$hdl->flush;
+                    }
                     say "Got $l for $logger_name";
                 }
             }
