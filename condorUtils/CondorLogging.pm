@@ -132,20 +132,27 @@ my sub ConfigureLoggers {
                 $level = $CONFIGURED_LEVEL;
             }
 
+            my $x = 0;
             for my $l (@LEVELS) {
                 # my $logger_level = $config->{level} // $CONFIGURED_LEVEL;
                 # if($LEVELSH{$logger_level} > $LEVELSH{$CONFIGURED_LEVEL}) {
                 #     $logger_level = $CONFIGURED_LEVEL;
                 # }
+
+                # say $handle "$logger_name" if $handle;
+
                 *{$logger_name . "::$l"} = sub {
                     my $lvl = $level;
                     my $hdl = $handle;
                     my $self = shift;
                     my $msg = shift;
 
+                    say "$logger_name [$l]: $msg";
+
                     if($LEVELSH{$l} <= $LEVELSH{$lvl}) { 
                         if($hdl){
-                            say $hdl $msg;
+                            say $hdl "$x: $msg";
+                            $x++;
                             $hdl->flush;
                         }
                     }
