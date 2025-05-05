@@ -136,6 +136,7 @@ my sub ConfigureLoggers {
             if($LEVELSH{$level} > $LEVELSH{$CONFIGURED_LEVEL}) {
                 $level = $CONFIGURED_LEVEL;
             }
+            say "$logger_name: ****$level****";
 
             for my $l (@LEVELS) {
                 *{$logger_name . "::$l"} = sub {
@@ -148,7 +149,10 @@ my sub ConfigureLoggers {
                     return unless $CONFIGURED_LEVEL;
                     return if $LEVELSH{$lvl} > $LEVELSH{$l};
 
-                    
+                    my $h = $private_log_handles{$logger_name};
+                    say $h $msg if $h;
+
+                    say("Logger name: $logger_name, Logger level: $lvl, This level: $l")
                 }
             }
         }
