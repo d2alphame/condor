@@ -21,6 +21,8 @@ my $CONFIGURED_LEVEL    = $LEVELS[-1];          # Default to the highest level
 my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
 
+my %private_log_handles;                        # File handle for each logger
+
 # Subroutine to validate logging levels
 my sub validate_level($) {
     my $level = shift;
