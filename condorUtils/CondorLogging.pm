@@ -85,7 +85,7 @@ my sub ConfigureLoggers {
     croak $will_croak if $will_croak;           # Croak if we have any accumulated errors
 
     if(defined $configs{aggregate_only}) { $AGGREGATE_ONLY = $configs{aggregate_only} }
-    # unless(validate_level $configs{level}){ say "Invalid logging level: $configs{level}. Using default level $CONFIGURED_LEVEL" }
+    
     if(defined $configs{level}) {
         if(exists $LEVELSH{$configs{level}}) {
             $CONFIGURED_LEVEL = $configs{level}
@@ -96,7 +96,6 @@ my sub ConfigureLoggers {
     {
         no strict 'refs';
         my $logger_name;
-        my $config;
         my $level;
         my $handle;
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
@@ -118,14 +117,18 @@ my sub ConfigureLoggers {
             $handle = undef;
             if(defined($config->{handle})){
                 $handle = $config->{handle};
+                $private_log_handles{$logger_name} = $config->{handle};
             }
             if(defined($config->{file})) {
                 if(defined $handle){
                     say "Found both 'handle' and 'file' parameters in logger '$logger_name'. Using the 'handle' as the default"
                 }
                 else {
-                    open $handle, '>>', $config->{file}
-                        or say "Ignoring the 'file' parameter of logger '$logger_name' because it could not be opened for logging: $!"
+                    my $res = open $handle, '>>', $config->{file};
+                    unless($res){ say "Ignoring the 'file' parameter of logger '$logger_name' because it could not be opened for logging: $!" }
+                    else {
+                        $private_log_handles{$logger_name} = $handle;
+                    }
                 }
             }
 
@@ -141,14 +144,11 @@ my sub ConfigureLoggers {
                     my $self = shift;
                     my $msg = shift;
 
-                    for my $h(@HANDLES) {
-                        say $h "$self got message: $msg";
-                    }
+                    # Return if we're not supposed to log at all
+                    return unless $CONFIGURED_LEVEL;
+                    return if $LEVELSH{$lvl} > $LEVELSH{$l};
 
-                    if($LEVELSH{$l} <= $LEVELSH{$lvl}) { 
-                        
-                    }
-
+                    
                 }
             }
         }
