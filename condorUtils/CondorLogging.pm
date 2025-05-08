@@ -22,7 +22,7 @@ my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
 
 my $configurations;                             # Hash ref for logger configurations
-my %private_log_handles;                        # File handle for each logger
+# my %private_log_handles;                        # File handle for each logger
 
 # Subroutine to validate logging levels
 my sub validate_level($) {
@@ -108,18 +108,23 @@ my sub ConfigureLoggers {
                 unless(exists $LEVELSH{$config->{level}}) {
                     say "Invalid logging level: '$config->{level}' in logger: '$logger_name'. Using default level '$CONFIGURED_LEVEL'";
                     # $level = $CONFIGURED_LEVEL;
-                    $config->{level} = $CONFIGURED_LEVEL;
+                    # $configurations->{$logger_name}{level} = $CONFIGURED_LEVEL;
+                    $configs{loggers}{$logger_name}{level} = $CONFIGURED_LEVEL;
                 }
             }
             else {
-                $config->{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
+                # $configurations->{$logger_name}{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
+                $configs{loggers}{$logger_name}{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
             }
 
             # Check and validate 'handle' for each logger
             $handle = undef;
             if(defined($config->{handle})){
                 # $handle = $config->{handle};
-                $private_log_handles{$logger_name} = $config->{handle};
+                # $private_log_handles{$logger_name} = $config->{handle};
+                # $configurations->{$logger_name}{handle} = $config->{handle};
+                # $configs{loggers}{$logger_name}{handle} = $config->{handle};
+                $handle = 1;
             }
             if(defined($config->{file})) {
                 if(defined $handle){
@@ -127,16 +132,19 @@ my sub ConfigureLoggers {
                 }
                 else {
                     my $res = open $handle, '>>', $config->{file};
-                    unless($res){ say "Ignoring the 'file' parameter of logger '$logger_name' because it could not be opened for logging: $!" }
+                    unless($res){
+                        say "Ignoring the 'file' parameter of logger '$logger_name' because it could not be opened for logging: $!";
+                        $configs{loggers}{$logger_name}{handle} = undef;
+                    }
                     else {
-                        $private_log_handles{$logger_name} = $handle;
+                        $configs{loggers}{$logger_name}{handle} = $handle;
                     }
                 }
             }
 
             # Between a logger's logging level and the configured level, always use the lower level
             if($LEVELSH{$config->{level}} > $LEVELSH{$CONFIGURED_LEVEL}) {
-                $config->{level} = $CONFIGURED_LEVEL;
+                $configs{loggers}{$logger_name}{level} = $CONFIGURED_LEVEL;
             }
 
             for my $l (@LEVELS) {
@@ -146,17 +154,18 @@ my sub ConfigureLoggers {
 
                     # Return if we're not supposed to log at all
                     return unless $CONFIGURED_LEVEL;
-                    return if $LEVELSH{$config->{level}} > $LEVELSH{$l};
+                    return if $LEVELSH{$configurations->{$logger_name}{level}} < $LEVELSH{$l};
+                    
+                    say "$logger_name: $l: $msg";
+                    my $h = $configs{loggers}{$logger_name}{handle};
 
-                    my $h = $private_log_handles{$logger_name};
                     say $h $msg if $h;
-
-                    say("Logger name: $logger_name, Logger level: $config->{level}, This level: $l")
                 }
             }
         }
     }
 
+    $configurations = $configs{loggers};           # Save the configurations for later use
     $IS_CONFIGURED = 1;
 }
 
