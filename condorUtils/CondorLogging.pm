@@ -21,6 +21,7 @@ my $CONFIGURED_LEVEL    = $LEVELS[-1];          # Default to the highest level
 my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
 
+my $configurations;                             # Hash ref for logger configurations
 my %private_log_handles;                        # File handle for each logger
 
 # Subroutine to validate logging levels
@@ -38,6 +39,8 @@ my sub ConfigureLoggers {
     my $caller_package = caller;    
     shift if $caller_package eq $_[0];          # Desppite our best efforts, this still got called with the arrow notation *facepalm*
     return unless @_;                           # The user provided no configs.
+
+    # Validate and cleanup the configs then save it.
 
     # Do sanity checks 
     my %configs = @_;
@@ -95,28 +98,27 @@ my sub ConfigureLoggers {
 
     {
         no strict 'refs';
-        my $logger_name;
-        my $level;
         my $handle;
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
             # Check and validate 'level' for each logger
             if(defined $config->{level}){
-                if(exists $LEVELSH{$config->{level}}) { 
-                    $level = $config->{level}
-                }
-                else {
+                # if(exists $LEVELSH{$config->{level}}) { 
+                #     $level = $config->{level}
+                # }
+                unless(exists $LEVELSH{$config->{level}}) {
                     say "Invalid logging level: '$config->{level}' in logger: '$logger_name'. Using default level '$CONFIGURED_LEVEL'";
-                    $level = $CONFIGURED_LEVEL;
+                    # $level = $CONFIGURED_LEVEL;
+                    $config->{level} = $CONFIGURED_LEVEL;
                 }
             }
             else {
-                $level = $CONFIGURED_LEVEL;
+                $config->{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
             }
 
             # Check and validate 'handle' for each logger
             $handle = undef;
             if(defined($config->{handle})){
-                $handle = $config->{handle};
+                # $handle = $config->{handle};
                 $private_log_handles{$logger_name} = $config->{handle};
             }
             if(defined($config->{file})) {
@@ -133,26 +135,23 @@ my sub ConfigureLoggers {
             }
 
             # Between a logger's logging level and the configured level, always use the lower level
-            if($LEVELSH{$level} > $LEVELSH{$CONFIGURED_LEVEL}) {
-                $level = $CONFIGURED_LEVEL;
+            if($LEVELSH{$config->{level}} > $LEVELSH{$CONFIGURED_LEVEL}) {
+                $config->{level} = $CONFIGURED_LEVEL;
             }
-            say "$logger_name: ****$level****";
 
             for my $l (@LEVELS) {
                 *{$logger_name . "::$l"} = sub {
-                    my $lvl = $level;
-                    my $hdl = $handle;
                     my $self = shift;
                     my $msg = shift;
 
                     # Return if we're not supposed to log at all
                     return unless $CONFIGURED_LEVEL;
-                    return if $LEVELSH{$lvl} > $LEVELSH{$l};
+                    return if $LEVELSH{$config->{level}} > $LEVELSH{$l};
 
                     my $h = $private_log_handles{$logger_name};
                     say $h $msg if $h;
 
-                    say("Logger name: $logger_name, Logger level: $lvl, This level: $l")
+                    say("Logger name: $logger_name, Logger level: $config->{level}, This level: $l")
                 }
             }
         }
