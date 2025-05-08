@@ -22,7 +22,6 @@ my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
 my @HANDLES;                                    # The file handles to log to
 
 my $configurations;                             # Hash ref for logger configurations
-# my %private_log_handles;                        # File handle for each logger
 
 # Subroutine to validate logging levels
 my sub validate_level($) {
@@ -102,13 +101,8 @@ my sub ConfigureLoggers {
         while(my ($logger_name, $config) =  each %{$configs{loggers}}) {
             # Check and validate 'level' for each logger
             if(defined $config->{level}){
-                # if(exists $LEVELSH{$config->{level}}) { 
-                #     $level = $config->{level}
-                # }
                 unless(exists $LEVELSH{$config->{level}}) {
                     say "Invalid logging level: '$config->{level}' in logger: '$logger_name'. Using default level '$CONFIGURED_LEVEL'";
-                    # $level = $CONFIGURED_LEVEL;
-                    # $configurations->{$logger_name}{level} = $CONFIGURED_LEVEL;
                     $configs{loggers}{$logger_name}{level} = $CONFIGURED_LEVEL;
                 }
             }
@@ -120,10 +114,6 @@ my sub ConfigureLoggers {
             # Check and validate 'handle' for each logger
             $handle = undef;
             if(defined($config->{handle})){
-                # $handle = $config->{handle};
-                # $private_log_handles{$logger_name} = $config->{handle};
-                # $configurations->{$logger_name}{handle} = $config->{handle};
-                # $configs{loggers}{$logger_name}{handle} = $config->{handle};
                 $handle = 1;
             }
             if(defined($config->{file})) {
