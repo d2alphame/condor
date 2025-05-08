@@ -107,11 +107,10 @@ my sub ConfigureLoggers {
                 }
             }
             else {
-                # $configurations->{$logger_name}{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
                 $configs{loggers}{$logger_name}{level} = $CONFIGURED_LEVEL;      # Use the default configured logging level
             }
 
-            # Check and validate 'handle' for each logger
+            # Check and validate 'handle' and 'file' for each logger
             $handle = undef;
             if(defined($config->{handle})){
                 $handle = 1;
@@ -175,15 +174,5 @@ sub import {
     # If we have any extra parameters, assume we want to configure loggers
     ConfigureLoggers @_ if @_;
 }
-
-
-
-# my sub $_per_logger_configuration {
-#     return sub {
-#         # Return the level if called in scalar context
-#         # Return a hash if called in list context
-#         return ...
-#     }
-# }
 
 1;
