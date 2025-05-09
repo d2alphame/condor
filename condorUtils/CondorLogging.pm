@@ -3,7 +3,8 @@ package CondorUtils::CondorLogging;
 use v5.34;
 use strict;
 use warnings;
-
+use threads;
+use Thread::Queue;
 use Carp;
 
 # The possible logging levels. If you have a shiny new level to log with, add it here
@@ -23,12 +24,16 @@ my @HANDLES;                                    # The file handles to log to
 
 my $configurations;                             # Hash ref for logger configurations
 
-# Subroutine to validate logging levels
-my sub validate_level($) {
-    my $level = shift;
-    return 0 unless defined $level;
-    return 0 unless exists $LEVELSH{$level};
-    return 1;
+
+# Assembles the log line. The parameters are
+# message       =>  The message to log
+# level         =>  The log level
+# name          =>  The name of the logger
+# fthread_id    =>  String representation of the thread id. This is usually an unsigned integer padded with zeros to 4
+#                       digits. E.g. '0056'
+my sub assemble_log($$$$$$$$) {
+    my %params = @_;
+    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{name}] $params{message}", localtime);
 }
 
 
@@ -145,6 +150,7 @@ my sub ConfigureLoggers {
                     return unless $CONFIGURED_LEVEL;
                     return if $LEVELSH{$configurations->{$logger_name}{level}} < $LEVELSH{$l};
                     
+                    # Assemble the log line
                     say "$logger_name: $l: $msg";
                     my $h = $configs{loggers}{$logger_name}{handle};
 
