@@ -6,6 +6,7 @@ use warnings;
 use threads;
 use Thread::Queue;
 use Carp;
+use POSIX;
 
 # The possible logging levels. If you have a shiny new level to log with, add it here
 my @LEVELS = qw(
@@ -18,11 +19,12 @@ my @LEVELS = qw(
 my %LEVELSH = map { $LEVELS[$_] => $_ + 1 } 0..$#LEVELS;
 
 my $IS_CONFIGURED       = 0;
-my $CONFIGURED_LEVEL    = $LEVELS[-1];          # Default to the highest level
-my $AGGREGATE_ONLY      = 1;                    # Aggregate ALL logs by default
-my @HANDLES;                                    # The file handles to log to
+my $CONFIGURED_LEVEL    = $LEVELS[-1];                  # Default to the highest level
+my $AGGREGATE_ONLY      = 1;                            # Aggregate ALL logs by default
+my @HANDLES;                                            # The file handles to log to
 
-my $configurations;                             # Hash ref for logger configurations
+my $configurations;                                     # Hash ref for logger configurations
+my $log_lines_queue = Thread::Queue->new();             # Queue for log lines to be processed
 
 
 # Assembles the log line. The parameters are
@@ -33,7 +35,7 @@ my $configurations;                             # Hash ref for logger configurat
 #                       digits. E.g. '0056'
 my sub assemble_log($$$$$$$$) {
     my %params = @_;
-    return strftime("%a, %e-%b-%Y %r $params{level} ThreadId=$params{fthread_id} [$params{name}] $params{message}", localtime);
+    return strftime("%a, %e-%b-%Y %r ThreadId=$params{fthread_id} $params{level} [$params{name}] $params{message}", localtime);
 }
 
 
@@ -144,17 +146,37 @@ my sub ConfigureLoggers {
             for my $l (@LEVELS) {
                 *{$logger_name . "::$l"} = sub {
                     my $self = shift;
+
+                    return if scalar(@_) == 0;                              # Return if there's no message to log
                     my $msg = shift;
 
                     # Return if we're not supposed to log at all
-                    return unless $CONFIGURED_LEVEL;
+                    return unless ($CONFIGURED_LEVEL and defined $msg);
                     return if $LEVELSH{$configurations->{$logger_name}{level}} < $LEVELSH{$l};
                     
                     # Assemble the log line
-                    say "$logger_name: $l: $msg";
-                    my $h = $configs{loggers}{$logger_name}{handle};
+                    # say "$logger_name: $l: $msg";
+                    # my $h = $configs{loggers}{$logger_name}{handle};
 
-                    say $h $msg if $h;
+                    # say $h $msg if $h;
+
+                    my $fthread_id = sprintf("%04d", threads->tid);         # Get and format the current thread id
+
+                    # Do the following asynchronously. No need to block the caller
+                    my $thr = async {
+                        my $log_line = assemble_log
+                            message     => $msg,
+                            level       => $l,
+                            name        => $self,
+                            fthread_id  => $fthread_id;
+                        
+                        $log_lines_queue->enqueue($log_line);               # Enqueue the log line for processing
+
+                        return if $AGGREGATE_ONLY;                          # If we're only aggregating, then we're done
+                        my $h = $configurations->{$logger_name}{handle};    # Get the handle for this logger
+                        say $h $log_line if $h;                             # Log to the handle if it exists
+                    
+                    }->detach;
                 }
             }
         }
