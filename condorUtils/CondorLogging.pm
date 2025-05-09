@@ -23,9 +23,9 @@ my $CONFIGURED_LEVEL    = $LEVELS[-1];                  # Default to the highest
 my $AGGREGATE_ONLY      = 1;                            # Aggregate ALL logs by default
 my @HANDLES;                                            # The file handles to log to
 
+my $log_thread;
 my $configurations;                                     # Hash ref for logger configurations
 my $log_lines_queue = Thread::Queue->new();             # Queue for log lines to be processed
-
 
 # Assembles the log line. The parameters are
 # message       =>  The message to log
@@ -147,45 +147,48 @@ my sub ConfigureLoggers {
                 *{$logger_name . "::$l"} = sub {
                     my $self = shift;
 
-                    return if scalar(@_) == 0;                              # Return if there's no message to log
-                    my $msg = shift;
-
                     # Return if we're not supposed to log at all
+                    return unless scalar(@_);
+                    my $msg = shift;
                     return unless ($CONFIGURED_LEVEL and defined $msg);
                     return if $LEVELSH{$configurations->{$logger_name}{level}} < $LEVELSH{$l};
-                    
+
                     # Assemble the log line
-                    # say "$logger_name: $l: $msg";
-                    # my $h = $configs{loggers}{$logger_name}{handle};
+                    my $log_line = assemble_log
+                        message     => $msg,
+                        level       => $l,
+                        name        => $self,
+                        fthread_id  => sprintf("%04d", threads->tid);
 
-                    # say $h $msg if $h;
+                    $log_lines_queue->enqueue($log_line);               # Enqueue the log line for processing
 
-                    my $fthread_id = sprintf("%04d", threads->tid);         # Get and format the current thread id
-
-                    # Do the following asynchronously. No need to block the caller
-                    my $thr = async {
-                        my $log_line = assemble_log
-                            message     => $msg,
-                            level       => $l,
-                            name        => $self,
-                            fthread_id  => $fthread_id;
-                        
-                        $log_lines_queue->enqueue($log_line);               # Enqueue the log line for processing
-
-                        return if $AGGREGATE_ONLY;                          # If we're only aggregating, then we're done
-                        my $h = $configurations->{$logger_name}{handle};    # Get the handle for this logger
-                        say $h $log_line if $h;                             # Log to the handle if it exists
-                    
-                    }->detach;
+                    return if $AGGREGATE_ONLY;                          # If we're only aggregating, then we're done
+                    my $h = $configurations->{$logger_name}{handle};    # Get the handle for this logger
+                    if($h) {
+                        say $h $log_line;                               # Log to the handle if it exists
+                        $h->flush;
+                    }                    
                 }
             }
         }
     }
 
+
+    threads->create(sub {
+        while(1) {
+            my $log = $log_lines_queue->dequeue_nb;
+            if(defined $log) {
+                for my $h (@HANDLES) {
+                    say $h $log if $h;                      # Log to all handles
+                    $h->flush;
+                }
+            }
+        }
+    })->detach;
+
     $configurations = $configs{loggers};           # Save the configurations for later use
     $IS_CONFIGURED = 1;
 }
-
 
 
 # Called when use'ing this module
