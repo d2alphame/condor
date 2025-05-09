@@ -73,7 +73,10 @@ my sub ConfigureLoggers {
         }
         else { $will_croak .= "If specifying 'files', it must be an array ref.\n" }
     }
-    unless($has_handles || $has_files) { $will_croak .= "You must specify at least one of 'handles' or 'files'.\n" }
+    unless($has_handles || $has_files) { 
+        say "No handles or files specified. Logging to STDOUT by default.";
+        push @HANDLES, *STDOUT;
+    }
     if(defined $configs{loggers}) {
         if(ref $configs{loggers} eq 'HASH') {
             $loggers = $configs{loggers};
@@ -86,9 +89,8 @@ my sub ConfigureLoggers {
         }
         else { $will_croak .= "If specifying 'loggers', it must be a hash ref.\n" }
     }
-    else {
-        # Define a default logger if none are provided
-        $loggers = { 'default' => {} };
+    elsif(!$configs{loggers}) {
+        $will_croak .= "Specify loggers to be configured with the 'loggers' parameter.\n";
     }
 
     croak $will_croak if $will_croak;           # Croak if we have any accumulated errors
